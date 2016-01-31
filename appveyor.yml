@@ -16,9 +16,11 @@ build_script:
   - cd build
   - cmake .. 
   - cmake --build . --config %CONFIGURATION%
-  - cmake --build . --config %CONFIGURATION% --target RUN_TESTS
   
-install:
+test_script:
+  - cmake --build . --config %CONFIGURATION% --target RUN_TESTS
+
+after_build:
   - cmake --build . --config %CONFIGURATION% --target INSTALL 
 
   
