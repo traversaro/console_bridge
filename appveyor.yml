@@ -1,0 +1,24 @@
+version: 1.0.{build}
+
+clone_folder: c:\projects\console_bridge
+
+os:
+ - Visual Studio 2013
+ - Visual Studio 2015
+
+configuration:
+  - Release
+
+build_script:
+  # compile console_bridge
+  - cd c:\projects\console_bridge
+  - md build
+  - cd build
+  - cmake .. 
+  - cmake --build . --config %CONFIGURATION%
+  - cmake --build . --config %CONFIGURATION% --target RUN_TESTS
+  
+install:
+  - cmake --build . --config %CONFIGURATION% --target INSTALL 
+
+  
