@@ -35,10 +35,12 @@
 /* Author: Ryan Luna, Ioan Sucan */
 
 #include "console_bridge/console.h"
-#include <boost/thread/mutex.hpp>
-#include <iostream>
+
 #include <cstdio>
 #include <cstdarg>
+
+#include <iostream>
+#include <mutex>
 
 /// @cond IGNORE
 
@@ -55,7 +57,7 @@ struct DefaultOutputHandler
     console_bridge::OutputHandler   *output_handler_;
     console_bridge::OutputHandler   *previous_output_handler_;
     console_bridge::LogLevel         logLevel_;
-    boost::mutex                     lock_; // it is likely the outputhandler does some I/O, so we serialize it
+    std::mutex                       lock_; // it is likely the outputhandler does some I/O, so we serialize it
 };
 
 // we use this function because we want to handle static initialization correctly
@@ -70,7 +72,7 @@ static DefaultOutputHandler* getDOH(void)
 
 #define USE_DOH                                                                \
     DefaultOutputHandler *doh = getDOH();                                      \
-    boost::mutex::scoped_lock slock(doh->lock_)
+    std::lock_guard<std::mutex> lock_guard(doh->lock_)
 
 #define MAX_BUFFER_SIZE 1024
 
@@ -99,6 +101,28 @@ void console_bridge::useOutputHandler(OutputHandler *oh)
 console_bridge::OutputHandler* console_bridge::getOutputHandler(void)
 {
     return getDOH()->output_handler_;
+}
+
+void console_bridge::log_deprecated(const char *file, int line,
+                                    LogLevel level, const char* m, ...)
+{
+    /*
+     * Workaround: see bug ros/console 30
+     * Exact copy of console_bridge::log, please remove it once the
+     * deprecation time expires.
+     */
+    USE_DOH;
+    if (doh->output_handler_ && level >= doh->logLevel_)
+    {
+        va_list __ap;
+        va_start(__ap, m);
+        char buf[MAX_BUFFER_SIZE];
+        vsnprintf(buf, sizeof(buf), m, __ap);
+        va_end(__ap);
+        buf[MAX_BUFFER_SIZE - 1] = '\0';
+
+        doh->output_handler_->log(buf, level, file, line);
+    }
 }
 
 void console_bridge::log(const char *file, int line, LogLevel level, const char* m, ...)
@@ -148,8 +172,13 @@ void console_bridge::OutputHandlerSTD::log(const std::string &text, LogLevel lev
 
 console_bridge::OutputHandlerFile::OutputHandlerFile(const char *filename) : OutputHandler()
 {
+#ifdef _MSC_VER
+    errno_t err = fopen_s(&file_, filename, "a");
+    if (err != 0 || !file_)
+#else
     file_ = fopen(filename, "a");
     if (!file_)
+#endif
         std::cerr << "Unable to open log file: '" << filename << "'" << std::endl;
 }
 

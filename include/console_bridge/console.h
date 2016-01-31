@@ -41,6 +41,17 @@
 
 #include "exportdecl.h"
 
+#ifdef __GNUC__
+#define CONSOLE_BRIDGE_DEPRECATED __attribute__ ((deprecated))
+#elif defined(_MSC_VER)
+#define CONSOLE_BRIDGE_DEPRECATED __declspec(deprecated)
+#else
+#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
+#define CONSOLE_BRIDGE_DEPRECATED
+#endif
+
+static inline void CONSOLE_BRIDGE_DEPRECATED console_bridge_deprecated() {}
+
 /** \file console.h
     \defgroup logging Logging Macros
     \{
@@ -63,13 +74,29 @@
 
     \}
 */
-#define logError(fmt, ...)  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, ##__VA_ARGS__)
+#define CONSOLE_BRIDGE_logError(fmt, ...)  \
+  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, ##__VA_ARGS__)
 
-#define logWarn(fmt, ...)   console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_WARN,  fmt, ##__VA_ARGS__)
+#define CONSOLE_BRIDGE_logWarn(fmt, ...)   \
+  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_WARN,  fmt, ##__VA_ARGS__)
 
-#define logInform(fmt, ...) console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_INFO,  fmt, ##__VA_ARGS__)
+#define CONSOLE_BRIDGE_logInform(fmt, ...) \
+  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_INFO,  fmt, ##__VA_ARGS__)
 
-#define logDebug(fmt, ...)  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_DEBUG, fmt, ##__VA_ARGS__)
+#define CONSOLE_BRIDGE_logDebug(fmt, ...)  \
+  console_bridge::log(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_DEBUG, fmt, ##__VA_ARGS__)
+
+#define logError(fmt, ...)  \
+  console_bridge::log_deprecated(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_ERROR, fmt, ##__VA_ARGS__)
+
+#define logWarn(fmt, ...)   \
+  console_bridge::log_deprecated(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_WARN,  fmt, ##__VA_ARGS__)
+
+#define logInform(fmt, ...) \
+  console_bridge::log_deprecated(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_INFO,  fmt, ##__VA_ARGS__)
+
+#define logDebug(fmt, ...)  \
+  console_bridge::log_deprecated(__FILE__, __LINE__, console_bridge::CONSOLE_BRIDGE_LOG_DEBUG, fmt, ##__VA_ARGS__)
 
 
 /** \brief Message namespace. This contains classes needed to
@@ -168,6 +195,11 @@ CONSOLE_BRIDGE_DLLAPI LogLevel getLogLevel(void);
     but rather used via a \ref logging "logging macro".  Formats the message
     string given the arguments and forwards the string to the output handler */
 CONSOLE_BRIDGE_DLLAPI void log(const char *file, int line, LogLevel level, const char* m, ...);
+
+/** \brief Root level logging function.  This should not be invoked directly,
+    but rather used via a \ref logging "logging macro".  Formats the message
+    string given the arguments and forwards the string to the output handler */
+CONSOLE_BRIDGE_DEPRECATED CONSOLE_BRIDGE_DLLAPI void log_deprecated(const char *file, int line, LogLevel level, const char* m, ...);
 }
 
 
