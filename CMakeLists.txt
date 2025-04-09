@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.0.2...3.22)
 project(console_bridge)
 
 set (CONSOLE_BRIDGE_MAJOR_VERSION 1)
